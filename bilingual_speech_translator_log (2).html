@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoiceTranslate Pro - Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'wave': 'wave 1.2s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        wave: {
+                            '0%, 100%': { transform: 'scaleY(0.3)' },
+                            '50%': { transform: 'scaleY(1.0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+        .dark .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(156, 163, 175, 0.4);
+            border-radius: 9999px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: rgba(75, 85, 99, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-slate-100 min-h-screen transition-colors duration-300 flex flex-col">
+
+    <!-- Header Navigation -->
+    <header class="sticky top-0 z-40 glass-panel border-b border-slate-200 dark:border-slate-800 px-4 lg:px-8 py-3.5 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
+                <i class="fa-solid font-bold fa-language text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold tracking-tight bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 dark:from-emerald-400 dark:via-teal-300 dark:to-cyan-400 bg-clip-text text-transparent">
+                    VoiceTranslate <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">PRO</span>
+                </h1>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Transcripción y Traducción en Tiempo Real</p>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-3">
+            <!-- Theme Toggle Button -->
+            <button id="themeToggleBtn" onclick="toggleTheme()" class="p-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-700 transition-all focus:outline-none flex items-center gap-2 text-sm font-medium" title="Cambiar Tema">
+                <i id="themeIcon" class="fa-solid fa-moon text-amber-500"></i>
+                <span id="themeLabel" class="hidden sm:inline">Oscuro</span>
+            </button>
+
+            <!-- Language Pair Selector -->
+            <div class="flex items-center bg-slate-200/80 dark:bg-slate-800/80 rounded-xl p-1 text-xs font-semibold">
+                <button id="btnPairEsEn" onclick="setLanguagePair('es-en')" class="px-3 py-1.5 rounded-lg transition-all shadow-sm bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400">
+                    🇪🇸 ES ↔ 🇬🇧 EN
+                </button>
+                <button id="btnPairEsZh" onclick="setLanguagePair('es-zh')" class="px-3 py-1.5 rounded-lg transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
+                    🇪🇸 ES ↔ 🇨🇳 ZH
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 lg:p-8 space-y-6">
+
+        <!-- Speech Control Bar & Audio Visualizer -->
+        <section class="glass-panel rounded-2xl p-4 md:p-6 shadow-xl relative overflow-hidden">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4 z-10 relative">
+                
+                <!-- Status & Mic Control -->
+                <div class="flex items-center gap-4 w-full md:w-auto">
+                    <button id="micBtn" onclick="toggleListening()" class="relative group w-16 h-16 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/30 flex items-center justify-center text-2xl transition-all transform active:scale-95 focus:outline-none">
+                        <i id="micIcon" class="fa-solid fa-microphone"></i>
+                        <span id="micPing" class="hidden absolute -top-1 -right-1 flex h-4 w-4">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-4 w-4 bg-red-500"></span>
+                        </span>
+                    </button>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span id="statusBadge" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                <span id="statusDot" class="w-2 h-2 rounded-full bg-slate-400"></span>
+                                <span id="statusText">Listo para Escuchar</span>
+                            </span>
+                            <span id="detectedLangBadge" class="hidden text-xs font-medium px-2 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                                Auto-Detectado: ES
+                            </span>
+                        </div>
+                        <p id="subStatusText" class="text-xs text-slate-500 dark:text-slate-400 mt-1">Haz clic en el micrófono para iniciar la traducción por voz en directo.</p>
+                    </div>
+                </div>
+
+                <!-- Live Audio Visualizer Bars -->
+                <div class="flex items-center justify-center gap-1 h-10 px-4 py-2 bg-slate-200/50 dark:bg-slate-900/50 rounded-xl w-full md:w-64">
+                    <div class="audio-bar w-1.5 h-3 bg-emerald-500 rounded-full transition-all duration-75"></div>
+                    <div class="audio-bar w-1.5 h-5 bg-emerald-500 rounded-full transition-all duration-75"></div>
+                    <div class="audio-bar w-1.5 h-2 bg-emerald-500 rounded-full transition-all duration-75"></div>
+                    <div class="audio-bar w-1.5 h-7 bg-emerald-500 rounded-full transition-all duration-75"></div>
+                    <div class="audio-bar w-1.5 h-4 bg-emerald-500 rounded-full transition-all duration-75"></div>
+                    <div class="audio-bar w-1.5 h-8 bg-emerald-500 rounded-full transition-all duration-75"></div>
+                    <div class="audio-bar w-1.5 h-3 bg-emerald-500 rounded-full transition-all duration-75"></div>
+                    <div class="audio-bar w-1.5 h-6 bg-emerald-500 rounded-full transition-all duration-75"></div>
+                    <div class="audio-bar w-1.5 h-2 bg-emerald-500 rounded-full transition-all duration-75"></div>
+                </div>
+
+                <!-- Speech Voice Settings -->
+                <div class="flex items-center gap-3 w-full md:w-auto justify-end">
+                    <label for="autoPlayTTS" class="flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-200/60 dark:bg-slate-800/60 px-3 py-2 rounded-xl">
+                        <input type="checkbox" id="autoPlayTTS" class="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 accent-emerald-500">
+                        <span>Reproducir Voz Auto</span>
+                    </label>
+                </div>
+            </div>
+        </section>
+
+        <!-- Live Dual Panel (Speech Input vs Live Translation) -->
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- Original Speech Live Card -->
+            <div class="glass-panel rounded-2xl p-5 shadow-lg border border-slate-200/80 dark:border-slate-800/80 flex flex-col min-h-[220px]">
+                <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-200 dark:border-slate-800">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-microphone-lines text-emerald-500"></i>
+                        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">Transcripción (Voz Entrada)</h2>
+                    </div>
+                    <span id="sourceLangTag" class="text-xs px-2 py-0.5 rounded font-mono font-bold bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                        ES (Español)
+                    </span>
+                </div>
+                <div class="flex-1 flex flex-col justify-between">
+                    <p id="liveSourceText" class="text-base text-slate-800 dark:text-slate-100 italic leading-relaxed">
+                        Presiona el micrófono y comienza a hablar...
+                    </p>
+                    <div class="flex items-center justify-between pt-4 mt-2 text-xs text-slate-400">
+                        <span id="sourceWordCount">0 palabras</span>
+                        <button onclick="speakText(document.getElementById('liveSourceText').innerText, currentSourceLang)" class="hover:text-emerald-500 transition-colors flex items-center gap-1">
+                            <i class="fa-solid fa-volume-high"></i> Escuchar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Real-time Translated Output Card -->
+            <div class="glass-panel rounded-2xl p-5 shadow-lg border border-slate-200/80 dark:border-slate-800/80 flex flex-col min-h-[220px] bg-gradient-to-br from-emerald-500/5 to-teal-500/5">
+                <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-200 dark:border-slate-800">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles text-teal-500"></i>
+                        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">Traducción en Tiempo Real</h2>
+                    </div>
+                    <span id="targetLangTag" class="text-xs px-2 py-0.5 rounded font-mono font-bold bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
+                        EN (English)
+                    </span>
+                </div>
+                <div class="flex-1 flex flex-col justify-between cursor-pointer" onclick="playCurrentTranslation()" title="Haz clic para escuchar la voz traducida">
+                    <p id="liveTargetText" class="text-base text-teal-900 dark:text-teal-100 font-medium leading-relaxed">
+                        La traducción automática aparecerá aquí...
+                    </p>
+                    <div class="flex items-center justify-between pt-4 mt-2 text-xs text-slate-400">
+                        <span id="targetWordCount">0 palabras</span>
+                        <div class="flex items-center gap-2">
+                            <button id="liveTTSBtn" onclick="event.stopPropagation(); playCurrentTranslation();" class="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-all font-semibold flex items-center gap-1.5">
+                                <i class="fa-solid fa-volume-high text-sm"></i>
+                                <span>Reproducción por Voz</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Saved History Section -->
+        <section class="glass-panel rounded-2xl p-5 md:p-6 shadow-xl space-y-4">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left text-emerald-500 text-lg"></i>
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100">Historial de Traducciones Guardadas</h3>
+                    <span id="historyCountBadge" class="ml-2 text-xs px-2.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 font-semibold text-slate-600 dark:text-slate-300">
+                        0
+                    </span>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                    <!-- Search Input -->
+                    <div class="relative flex-1 sm:w-48">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-xs text-slate-400"></i>
+                        <input type="text" id="searchInput" oninput="filterHistory()" placeholder="Buscar registro..." class="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+
+                    <!-- Export Actions -->
+                    <button onclick="exportHistory('txt')" class="px-3 py-1.5 text-xs font-medium rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-all flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-lines text-blue-500"></i> TXT
+                    </button>
+                    <button onclick="exportHistory('json')" class="px-3 py-1.5 text-xs font-medium rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-all flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-code text-amber-500"></i> JSON
+                    </button>
+                    <button onclick="clearHistory()" class="px-3 py-1.5 text-xs font-medium rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 transition-all flex items-center gap-1.5">
+                        <i class="fa-solid fa-trash-can"></i> Limpiar
+                    </button>
+                </div>
+            </div>
+
+            <!-- History List Container -->
+            <div id="historyList" class="space-y-3 max-h-[450px] overflow-y-auto pr-1">
+                <!-- Dynamic cards populated here -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Floating Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 glass-panel px-4 py-3 rounded-xl shadow-2xl border border-emerald-500/30 flex items-center gap-3">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-500"></i>
+        <span id="toastMessage" class="text-xs font-semibold text-slate-800 dark:text-slate-100">Acción completada</span>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // State Management
+        let isListening = false;
+        let recognition = null;
+        let selectedPair = 'es-en'; // 'es-en' or 'es-zh'
+        let currentSourceLang = 'es-ES';
+        let currentTargetLang = 'en-US';
+        let translationHistory = JSON.parse(localStorage.getItem('vt_history') || '[]');
+        let currentSpeakingUtterance = null;
+        let debounceTimer = null;
+
+        // Initialize Web Speech APIs
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const synth = window.speechSynthesis;
+
+        window.onload = () => {
+            initSpeechRecognition();
+            renderHistory();
+            updateLanguagePairUI();
+            
+            // Set initial theme based on system preference or saved setting
+            if (localStorage.getItem('vt_theme') === 'light') {
+                document.documentElement.classList.remove('dark');
+            } else {
+                document.documentElement.classList.add('dark');
+            }
+            updateThemeUI();
+        };
+
+        // Theme Switcher
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('vt_theme', isDark ? 'dark' : 'light');
+            updateThemeUI();
+        }
+
+        function updateThemeUI() {
+            const isDark = document.documentElement.classList.contains('dark');
+            document.getElementById('themeIcon').className = isDark ? 'fa-solid fa-sun text-amber-400' : 'fa-solid fa-moon text-indigo-600';
+            document.getElementById('themeLabel').innerText = isDark ? 'Modo Día' : 'Modo Noche';
+        }
+
+        // Language Pair Setter
+        function setLanguagePair(pair) {
+            selectedPair = pair;
+            if (pair === 'es-en') {
+                currentSourceLang = 'es-ES';
+                currentTargetLang = 'en-US';
+                document.getElementById('sourceLangTag').innerText = 'ES (Español)';
+                document.getElementById('targetLangTag').innerText = 'EN (English)';
+            } else {
+                currentSourceLang = 'es-ES';
+                currentTargetLang = 'zh-CN';
+                document.getElementById('sourceLangTag').innerText = 'ES (Español)';
+                document.getElementById('targetLangTag').innerText = 'ZH (Mandarin)';
+            }
+            updateLanguagePairUI();
+            if (isListening && recognition) {
+                recognition.stop();
+                setTimeout(() => recognition.start(), 300);
+            }
+        }
+
+        function updateLanguagePairUI() {
+            const btnEsEn = document.getElementById('btnPairEsEn');
+            const btnEsZh = document.getElementById('btnPairEsZh');
+            if (selectedPair === 'es-en') {
+                btnEsEn.className = 'px-3 py-1.5 rounded-lg transition-all shadow-sm bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 font-bold';
+                btnEsZh.className = 'px-3 py-1.5 rounded-lg transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100';
+            } else {
+                btnEsZh.className = 'px-3 py-1.5 rounded-lg transition-all shadow-sm bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 font-bold';
+                btnEsEn.className = 'px-3 py-1.5 rounded-lg transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100';
+            }
+        }
+
+        // Web Speech Recognition Initialization
+        function initSpeechRecognition() {
+            if (!SpeechRecognition) {
+                showToast('Navegador no soporta Web Speech API de micrófono', 'error');
+                document.getElementById('subStatusText').innerText = 'Tu navegador no admite entrada de voz en vivo. Usa Chrome, Edge o Safari.';
+                return;
+            }
+
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = currentSourceLang;
+
+            recognition.onstart = () => {
+                isListening = true;
+                updateMicUI(true);
+            };
+
+            recognition.onresult = (event) => {
+                let interimTranscript = '';
+                let finalTranscript = '';
+
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        finalTranscript += event.results[i][0].transcript;
+                    } else {
+                        interimTranscript += event.results[i][0].transcript;
+                    }
+                }
+
+                const fullText = finalTranscript || interimTranscript;
+                if (fullText.trim()) {
+                    document.getElementById('liveSourceText').innerText = fullText;
+                    document.getElementById('sourceWordCount').innerText = `${fullText.trim().split(/\s+/).length} palabras`;
+                    
+                    // Trigger live translation
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(() => {
+                        translateText(fullText, finalTranscript.length > 0);
+                    }, 400);
+                }
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error', event.error);
+                if (event.error !== 'no-speech') {
+                    showToast('Error en el micrófono: ' + event.error, 'error');
+                }
+            };
+
+            recognition.onend = () => {
+                if (isListening) {
+                    try { recognition.start(); } catch (e) {}
+                } else {
+                    updateMicUI(false);
+                }
+            };
+        }
+
+        function toggleListening() {
+            if (!recognition) initSpeechRecognition();
+            if (!recognition) return;
+
+            if (isListening) {
+                isListening = false;
+                recognition.stop();
+                updateMicUI(false);
+                showToast('Grabación pausada');
+            } else {
+                recognition.lang = currentSourceLang;
+                recognition.start();
+                showToast('Escuchando voz...');
+            }
+        }
+
+        function updateMicUI(listening) {
+            const micBtn = document.getElementById('micBtn');
+            const micIcon = document.getElementById('micIcon');
+            const micPing = document.getElementById('micPing');
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            const statusBadge = document.getElementById('statusBadge');
+            const bars = document.querySelectorAll('.audio-bar');
+
+            if (listening) {
+                micBtn.className = 'relative group w-16 h-16 rounded-2xl bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/30 flex items-center justify-center text-2xl transition-all transform active:scale-95 focus:outline-none';
+                micIcon.className = 'fa-solid fa-microphone-slash';
+                micPing.classList.remove('hidden');
+                statusDot.className = 'w-2 h-2 rounded-full bg-red-500 animate-pulse';
+                statusText.innerText = 'Escuchando en vivo...';
+                statusBadge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20';
+                bars.forEach(bar => bar.classList.add('animate-wave'));
+            } else {
+                micBtn.className = 'relative group w-16 h-16 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/30 flex items-center justify-center text-2xl transition-all transform active:scale-95 focus:outline-none';
+                micIcon.className = 'fa-solid fa-microphone';
+                micPing.classList.add('hidden');
+                statusDot.className = 'w-2 h-2 rounded-full bg-slate-400';
+                statusText.innerText = 'Listo para Escuchar';
+                statusBadge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400';
+                bars.forEach(bar => bar.classList.remove('animate-wave'));
+            }
+        }
+
+        // Live Dynamic Translation using MyMemory Free API
+        async function translateText(text, isFinal) {
+            if (!text || text.trim() === '') return;
+
+            const targetLang = currentTargetLang.split('-')[0];
+            const sourceLang = currentSourceLang.split('-')[0];
+            const pair = `${sourceLang}|${targetLang}`;
+
+            try {
+                const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${pair}`);
+                const data = await res.json();
+                
+                if (data && data.responseData) {
+                    const translated = data.responseData.translatedText;
+                    document.getElementById('liveTargetText').innerText = translated;
+                    document.getElementById('targetWordCount').innerText = `${translated.trim().split(/\s+/).length} palabras`;
+
+                    // If phrase is finalized, speak TTS (if enabled) and save to persistent History
+                    if (isFinal) {
+                        if (document.getElementById('autoPlayTTS').checked) {
+                            speakText(translated, currentTargetLang);
+                        }
+                        saveToHistory(text, translated, sourceLang, targetLang);
+                    }
+                }
+            } catch (err) {
+                console.error('Translation error', err);
+            }
+        }
+
+        // Text To Speech (TTS) Implementation
+        function speakText(text, lang) {
+            if (!synth) {
+                showToast('Síntesis de Voz no soportada en este navegador', 'error');
+                return;
+            }
+            if (!text || text.trim() === '' || text.includes('aparecerá aquí')) return;
+
+            synth.cancel(); // Stop any active speech
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = lang;
+            utterance.rate = 0.95; // Slightly natural pitch/speed
+
+            // Select language-matched voice if available
+            const voices = synth.getVoices();
+            const matchingVoice = voices.find(v => v.lang.startsWith(lang.split('-')[0]));
+            if (matchingVoice) utterance.voice = matchingVoice;
+
+            // Animate playback button
+            const ttsBtn = document.getElementById('liveTTSBtn');
+            if (ttsBtn) ttsBtn.classList.add('animate-pulse', 'bg-emerald-500/30');
+
+            utterance.onend = () => {
+                if (ttsBtn) ttsBtn.classList.remove('animate-pulse', 'bg-emerald-500/30');
+            };
+
+            utterance.onerror = () => {
+                if (ttsBtn) ttsBtn.classList.remove('animate-pulse', 'bg-emerald-500/30');
+            };
+
+            synth.speak(utterance);
+        }
+
+        function playCurrentTranslation() {
+            const translatedText = document.getElementById('liveTargetText').innerText;
+            speakText(translatedText, currentTargetLang);
+        }
+
+        // LocalStorage History Operations
+        function saveToHistory(original, translated, fromLang, toLang) {
+            const newRecord = {
+                id: Date.now(),
+                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+                date: new Date().toLocaleDateString(),
+                original: original,
+                translated: translated,
+                fromLang: fromLang.toUpperCase(),
+                toLang: toLang.toUpperCase(),
+                words: translated.trim().split(/\s+/).length
+            };
+
+            translationHistory.unshift(newRecord);
+            if (translationHistory.length > 50) translationHistory.pop(); // Keep top 50
+            localStorage.setItem('vt_history', JSON.stringify(translationHistory));
+            renderHistory();
+        }
+
+        function renderHistory(items = translationHistory) {
+            const container = document.getElementById('historyList');
+            document.getElementById('historyCountBadge').innerText = items.length;
+
+            if (items.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-10 text-slate-400">
+                        <i class="fa-regular fa-folder-open text-3xl mb-2"></i>
+                        <p class="text-xs">No hay traducciones en el historial aún.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = items.map(item => `
+                <div class="group glass-panel rounded-xl p-4 transition-all hover:border-emerald-500/40 relative border border-slate-200/60 dark:border-slate-800/60 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+                    <div class="space-y-1.5 flex-1 w-full">
+                        <div class="flex items-center gap-2 text-xs">
+                            <span class="font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">
+                                ${item.fromLang} ➔ ${item.toLang}
+                            </span>
+                            <span class="text-slate-400"><i class="fa-regular fa-clock text-[10px]"></i> ${item.timestamp} - ${item.date}</span>
+                            <span class="text-slate-400 ml-auto md:ml-0">• ${item.words} palabras</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1">
+                            <p class="text-xs text-slate-600 dark:text-slate-300 italic" contenteditable="true" onblur="editHistory(${item.id}, 'original', this.innerText)">
+                                ${escapeHtml(item.original)}
+                            </p>
+                            <p class="text-xs font-semibold text-slate-800 dark:text-slate-100 cursor-pointer hover:text-emerald-500 transition-colors" onclick="speakText('${escapeQuotes(item.translated)}', '${item.toLang.toLowerCase()}')" title="Haz clic para escuchar voz">
+                                <i class="fa-solid fa-volume-high text-emerald-500 mr-1 text-[10px]"></i>
+                                ${escapeHtml(item.translated)}
+                            </p>
+                        </div>
+                    </div>
+                    <!-- Action Buttons -->
+                    <div class="flex items-center gap-1 self-end md:self-center">
+                        <button onclick="speakText('${escapeQuotes(item.translated)}', '${item.toLang.toLowerCase()}')" class="p-2 rounded-lg hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 transition-colors" title="Escuchar Voz Sintética">
+                            <i class="fa-solid fa-volume-high text-sm"></i>
+                        </button>
+                        <button onclick="copyToClipboard('${escapeQuotes(item.translated)}')" class="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 transition-colors" title="Copiar Traducción">
+                            <i class="fa-regular fa-copy text-sm"></i>
+                        </button>
+                        <button onclick="deleteHistoryItem(${item.id})" class="p-2 rounded-lg hover:bg-red-500/10 text-red-500 transition-colors" title="Eliminar Registro">
+                            <i class="fa-regular fa-trash-can text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterHistory() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = translationHistory.filter(h => 
+                h.original.toLowerCase().includes(query) || 
+                h.translated.toLowerCase().includes(query)
+            );
+            renderHistory(filtered);
+        }
+
+        function editHistory(id, field, newText) {
+            const item = translationHistory.find(h => h.id === id);
+            if (item) {
+                item[field] = newText.trim();
+                localStorage.setItem('vt_history', JSON.stringify(translationHistory));
+            }
+        }
+
+        function deleteHistoryItem(id) {
+            translationHistory = translationHistory.filter(h => h.id !== id);
+            localStorage.setItem('vt_history', JSON.stringify(translationHistory));
+            renderHistory();
+            showToast('Elemento eliminado del historial');
+        }
+
+        function clearHistory() {
+            if (translationHistory.length === 0) return;
+            translationHistory = [];
+            localStorage.setItem('vt_history', JSON.stringify(translationHistory));
+            renderHistory();
+            showToast('Historial vaciado por completo');
+        }
+
+        // Export Functionality (TXT & JSON)
+        function exportHistory(type) {
+            if (translationHistory.length === 0) {
+                showToast('No hay datos para exportar', 'error');
+                return;
+            }
+
+            let content = '';
+            let filename = `traducciones_${new Date().toISOString().slice(0, 10)}`;
+            let mimeType = 'text/plain';
+
+            if (type === 'json') {
+                content = JSON.stringify(translationHistory, null, 2);
+                filename += '.json';
+                mimeType = 'application/json';
+            } else {
+                content = translationHistory.map(h => 
+                    `[${h.date} ${h.timestamp}] (${h.fromLang} -> ${h.toLang})\nOriginal: ${h.original}\nTraducción: ${h.translated}\n----------------------------------------`
+                ).join('\n\n');
+                filename += '.txt';
+            }
+
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast(`Exportado correctamente como ${type.toUpperCase()}`);
+        }
+
+        // Clipboard Helper
+        function copyToClipboard(text) {
+            const temp = document.createElement('textarea');
+            temp.value = text;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            document.body.removeChild(temp);
+            showToast('Texto copiado al portapapeles');
+        }
+
+        // Notification Helper
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            const toastIcon = document.getElementById('toastIcon');
+
+            toastMessage.innerText = message;
+            if (type === 'error') {
+                toastIcon.className = 'fa-solid fa-circle-exclamation text-red-500';
+            } else {
+                toastIcon.className = 'fa-solid fa-circle-check text-emerald-500';
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        // String Sanitizers
+        function escapeHtml(str) {
+            return str.replace(/[&<>"']/g, function(m) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+            });
+        }
+
+        function escapeQuotes(str) {
+            return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        }
+    </script>
+</body>
+</html>
